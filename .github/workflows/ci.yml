@@ -1,0 +1,155 @@
+# GitHub Actions CI/CD Workflow for Saweria Webhook Handler
+# This workflow automatically runs tests, linting, security audits, and builds
+# the project on every push and pull request to ensure code quality.
+
+name: CI
+
+# Trigger conditions: run this workflow when code is pushed or PR is opened
+on:
+  push:
+    # Only run on these branches to avoid excessive CI runs
+    branches: [ main, master, develop ]
+  pull_request:
+    # Validate pull requests to these branches
+    branches: [ main, master, develop ]
+
+# Global environment variables used across all jobs
+env:
+  # Enable colored output in Cargo for better readability
+  CARGO_TERM_COLOR: always
+  # Show full backtrace if a test panics
+  RUST_BACKTRACE: 1
+
+# JOB: test - Run all unit and integration tests
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the repository code
+      - uses: actions/checkout@v4
+      
+      # Install the latest stable Rust compiler and toolchain
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      # Cache the Cargo registry to speed up dependency downloads
+      # Uses Cargo.lock hash as key to invalidate cache when dependencies change
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      # Cache the Cargo git cache for faster git dependencies resolution
+      - name: Cache cargo index
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+      
+      # Cache compiled artifacts to avoid recompiling unchanged dependencies
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      
+      # Execute all tests with verbose output for debugging
+      - name: Run tests
+        run: cargo test --verbose
+
+  # JOB: fmt - Check if code follows Rust formatting standards using rustfmt
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the repository code
+      - uses: actions/checkout@v4
+      
+      # Install Rust toolchain with rustfmt component
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      
+      # Run rustfmt in check mode (fails if code is not properly formatted)
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+  # JOB: clippy - Run Clippy linter to detect common Rust mistakes and anti-patterns
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the repository code
+      - uses: actions/checkout@v4
+      
+      # Install Rust toolchain with clippy component
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      
+      # Cache compiled artifacts to avoid recompiling
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      
+      # Run Clippy with warnings treated as errors (-D warnings flag)
+      # This ensures code quality standards are maintained
+      - name: Run clippy
+        run: cargo clippy -- -D warnings
+
+  # JOB: build - Compile the project in release mode and store the binary artifacts
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the repository code
+      - uses: actions/checkout@v4
+      
+      # Install the latest stable Rust compiler and toolchain
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      # Cache compiled artifacts for faster builds
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      
+      # Build the project in release mode for optimization
+      # --release flag enables all optimizations
+      # --verbose shows detailed build output
+      - name: Build release binary
+        run: cargo build --release --verbose
+      
+      # Upload the compiled binary as a GitHub Actions artifact
+      # Makes the binary available for download from the Actions tab
+      # Useful for distributing builds without committing binaries
+      - name: Upload binary artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: saweria-webhook-${{ runner.os }}
+          path: target/release/saweria-webhook
+          if-no-files-found: warn
+
+  # JOB: security_audit - Scan dependencies for known security vulnerabilities
+  # Uses the RustSec advisory database to identify unsafe packages
+  security_audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the repository code
+      - uses: actions/checkout@v4
+      
+      # Run security audit against the RustSec advisory database
+      # Fails if any vulnerabilities are found in dependencies
+      - name: Run security audit
+        uses: rustsec/audit-check-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
