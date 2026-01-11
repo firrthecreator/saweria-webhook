@@ -1,0 +1,25 @@
+[package]
+name = "saweria-webhook"
+version = "1.0.0"
+edition = "2021"
+authors = ["Firr, The Creator. firrthecreator@gmail.com"]
+description = "A high-performance Rust webhook handler for Saweria donations."
+
+[dependencies]
+# Web Framework
+axum = "0.7"
+tokio = { version = "1.0", features = ["full"] }
+
+# Serialization (JSON)
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Environment Variables
+dotenvy = "0.15"
+
+# Logging & Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error Handling helpers (optional but good practice)
+thiserror = "1.0"

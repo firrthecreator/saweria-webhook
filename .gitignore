@@ -1,0 +1,14 @@
+# Rust build artifacts
+/target
+
+# Rust backup files
+**/*.rs.bk
+
+# Cargo lockfile (ignore for libraries)
+Cargo.lock
+
+# Environment variables
+.env
+
+# macOS system files
+.DS_Store
