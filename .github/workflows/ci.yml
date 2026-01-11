@@ -7,11 +7,11 @@ name: CI
 # Trigger conditions: run this workflow when code is pushed or PR is opened
 on:
   push:
-    # Only run on these branches to avoid excessive CI runs
-    branches: [ main, master, develop ]
+    # Only run on main branch
+    branches: [ main ]
   pull_request:
-    # Validate pull requests to these branches
-    branches: [ main, master, develop ]
+    # Validate pull requests to main branch
+    branches: [ main ]
 
 # Global environment variables used across all jobs
 env:
@@ -132,21 +132,12 @@ jobs:
       # Makes the binary available for download from the Actions tab
       # Useful for distributing builds without committing binaries
       - name: Upload binary artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: saweria-webhook-${{ runner.os }}
           path: target/release/saweria-webhook
           if-no-files-found: warn
 
-  # JOB: security_audit - Scan dependencies for known security vulnerabilities
-  # Uses the RustSec advisory database to identify unsafe packages
-  security_audit:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      # Check out the repository code
-      - uses: actions/checkout@v4
-      
       # Run security audit against the RustSec advisory database
       # Fails if any vulnerabilities are found in dependencies
       - name: Run security audit

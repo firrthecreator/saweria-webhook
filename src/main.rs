@@ -2,13 +2,13 @@ mod config;
 mod handlers;
 mod models;
 
+use crate::config::Config;
 use axum::{
     routing::{get, post},
     Router,
 };
 use std::net::SocketAddr;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use crate::config::Config;
 
 #[tokio::main]
 async fn main() {
@@ -16,7 +16,8 @@ async fn main() {
     // This will print logs to the console based on RUST_LOG env var
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG").unwrap_or_else(|_| "saweria_webhook=info,tower_http=debug".into()),
+            std::env::var("RUST_LOG")
+                .unwrap_or_else(|_| "saweria_webhook=info,tower_http=debug".into()),
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();

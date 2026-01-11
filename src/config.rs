@@ -1,5 +1,5 @@
-use std::env;
 use dotenvy::dotenv;
+use std::env;
 
 /// Configuration struct to hold environment variables.
 #[derive(Debug, Clone)]
@@ -20,8 +20,8 @@ impl Config {
             .parse::<u16>()
             .expect("SERVER_PORT must be a valid number");
 
-        let webhook_path = env::var("WEBHOOK_PATH")
-            .unwrap_or_else(|_| "/webhook/saweria".to_string());
+        let webhook_path =
+            env::var("WEBHOOK_PATH").unwrap_or_else(|_| "/webhook/saweria".to_string());
 
         Config {
             server_port,

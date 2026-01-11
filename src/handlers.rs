@@ -1,18 +1,12 @@
-use axum::{
-    Json,
-    response::IntoResponse,
-    http::StatusCode,
-};
+use crate::models::{ApiResponse, SaweriaDonation};
+use axum::{http::StatusCode, response::IntoResponse, Json};
 use tracing::info;
-use crate::models::{SaweriaDonation, ApiResponse};
 
 /// Handles the incoming webhook request from Saweria.
 ///
 /// It deserializes the JSON payload into `SaweriaDonation`.
 /// If the data format is incorrect, Axum will automatically reject it (422).
-pub async fn handle_webhook(
-    Json(payload): Json<SaweriaDonation>,
-) -> impl IntoResponse {
+pub async fn handle_webhook(Json(payload): Json<SaweriaDonation>) -> impl IntoResponse {
     // Log the donation details clearly to the console
     info!("   Donation Received!");
     info!("   From: {}", payload.donator_name);
@@ -22,7 +16,7 @@ pub async fn handle_webhook(
 
     // Business Logic:
     // TODO: Add your custom logic here (e.g., save to DB, forward to Discord/OBS).
-    
+
     // Construct a success response
     let response = ApiResponse {
         status: "success".to_string(),
